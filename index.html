@@ -6,6 +6,9 @@
     <title>Golpoboliyer Kheror Khata | গল্পবলিয়ের খেরোর খাতা</title>
     <meta name="theme-color" content="#080808">
     
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Courier+Prime&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
@@ -154,6 +157,38 @@
                 setNewProj({ title: '', type: 'Audiobook Script', status: 'Active', deadline: '' });
             };
 
+            // Offline Backup Handlers
+            const handleExport = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(safeProjects));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                const dateCode = new Date().toISOString().split('T')[0];
+                downloadAnchorNode.setAttribute("download", `KherorKhata_Backup_${dateCode}.json`);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            };
+
+            const handleImport = (event) => {
+                const fileReader = new FileReader();
+                fileReader.onload = e => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (Array.isArray(importedData)) {
+                            setProjects(importedData);
+                            alert("Manuscript data restored successfully.");
+                        } else {
+                            alert("Error: The backup file format is incorrect.");
+                        }
+                    } catch (error) {
+                        alert("Error reading the backup file.");
+                    }
+                };
+                if(event.target.files[0]) {
+                    fileReader.readAsText(event.target.files[0]);
+                }
+            };
+
             return (
                 <div className="p-6 max-w-5xl mx-auto min-h-screen pt-12">
                     <div className="flex flex-col items-center mb-16">
@@ -183,10 +218,18 @@
                              </div>
                         </div>
 
-                        <div className="flex gap-4 mt-10">
-                             <button onClick={() => setIsCreating(true)} className="bg-gold text-bgDeep hover:bg-yellow-500 px-8 py-3 text-[11px] tracking-[0.15em] font-mono font-bold rounded-sm transition-colors shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                        {/* Updated Actions Section with Export/Import */}
+                        <div className="flex flex-wrap justify-center gap-4 mt-10">
+                             <button onClick={() => setIsCreating(true)} className="bg-gold text-bgDeep hover:bg-yellow-500 px-6 py-3 text-[11px] tracking-[0.15em] font-mono font-bold rounded-sm transition-colors shadow-[0_0_15px_rgba(212,175,55,0.1)]">
                                  NEW MANUSCRIPT
                              </button>
+                             <button onClick={handleExport} className="border border-borderFaint text-textDim hover:border-gold hover:text-gold px-4 py-3 text-[10px] tracking-[0.1em] font-mono rounded-sm transition-colors flex items-center gap-2">
+                                 <i className="ph ph-download-simple"></i> BACKUP
+                             </button>
+                             <label className="border border-borderFaint text-textDim hover:border-gold hover:text-gold px-4 py-3 text-[10px] tracking-[0.1em] font-mono rounded-sm transition-colors flex items-center gap-2 cursor-pointer">
+                                 <i className="ph ph-upload-simple"></i> RESTORE
+                                 <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+                             </label>
                         </div>
                     </div>
 
@@ -450,6 +493,16 @@
                 <App />
             </ErrorBoundary>
         );
+    </script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => console.log('Service Worker Registered'))
+                    .catch(err => console.error('Service Worker Error', err));
+            });
+        }
     </script>
 </body>
 </html>
