@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golpoboliyer Kheror Khata | গল্পবলিয়ের খেরোর খাতা</title>
+    <meta name="theme-color" content="#080808">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Courier+Prime&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bgDeep: '#080808',
+                        bgCard: '#0f0f0f',
+                        gold: '#d4af37',
+                        goldDim: '#8b7324',
+                        textDim: '#737373',
+                        textFaint: '#4a4a4a',
+                        borderFaint: '#2a261b'
+                    },
+                    fontFamily: {
+                        serif: ['Cinzel', 'Noto Serif Bengali', 'serif'],
+                        body: ['Merriweather', 'Noto Serif Bengali', 'serif'],
+                        mono: ['Courier Prime', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            var loading = document.getElementById('loading');
+            if(loading) {
+                loading.innerHTML = '<div style="color:#ff4444; font-family:monospace; font-size:12px; padding:2rem;">CRITICAL SYSTEM ERROR:<br><br>' + msg + '</div>';
+            }
+            return false;
+        };
+
+        setTimeout(function() {
+            var loading = document.getElementById('loading');
+            if(loading && loading.style.display !== 'none') {
+                loading.innerHTML = '<div style="color:#ff4444; font-family:monospace; font-size:12px; padding:2rem;">NETWORK TIMEOUT:<br><br>Your browser or network provider is blocking the framework files from loading. Try clearing your browser cache or switching Wi-Fi/Mobile networks.</div>';
+            }
+        }, 8000);
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.3/babel.min.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body { background-color: #080808; color: #d4af37; font-family: 'Merriweather', 'Noto Serif Bengali', serif; margin: 0; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #080808; }
+        ::-webkit-scrollbar-thumb { background: #2a261b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b7324; }
+        .distraction-free { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; background: #050505; padding: 2rem 10%; }
+        textarea:focus, input:focus, select:focus { outline: none; }
+        .glow-text { text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div id="loading" style="color: #8b7324; text-align: center; margin-top: 40vh; font-family: 'Courier Prime', monospace; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;">
+            Initializing Manuscript System...<br><br>
+            <span style="color: #4a4a4a; font-size: 10px;">Please wait while the ink dries.</span>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        document.getElementById('loading').style.display = 'none';
+
+        const { useState, useEffect, Component } = React;
+
+        class ErrorBoundary extends Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, errorInfo: '' };
+            }
+            static getDerivedStateFromError(error) {
+                return { hasError: true };
+            }
+            componentDidCatch(error, errorInfo) {
+                this.setState({ errorInfo: error.toString() });
+            }
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div style={{ color: '#ff4444', padding: '2rem', fontFamily: 'monospace', fontSize: '12px' }}>
+                            <h2 style={{ color: '#ff0000' }}>Local Data Conflict</h2>
+                            <p>There was a conflict loading your local data. Please tap your browser menu and select "Clear Site Data", then refresh.</p>
+                            <pre style={{ color: '#888', marginTop: '1rem', whiteSpace: 'pre-wrap' }}>{this.state.errorInfo}</pre>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        function useLocalStorage(key, initialValue) {
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = window.localStorage.getItem(key);
+                    if (!item) return initialValue;
+                    const parsed = JSON.parse(item);
+                    return Array.isArray(parsed) ? parsed : initialValue;
+                } catch (e) {
+                    return initialValue;
+                }
+            });
+
+            const setValue = (value) => {
+                try {
+                    const valueToStore = typeof value === 'function' ? value(storedValue) : value;
+                    setStoredValue(valueToStore);
+                    window.localStorage.setItem(key, JSON.stringify(valueToStore));
+                } catch (e) {}
+            };
+            return [storedValue, setValue];
+        }
+
+        const Dashboard = ({ projects, setProjects, openProject }) => {
+            const [isCreating, setIsCreating] = useState(false);
+            const [newProj, setNewProj] = useState({ title: '', type: 'Audiobook Script', status: 'Active', deadline: '' });
+
+            const shelves = ['Audiobook Script', 'Novel', 'Video Script', 'Shorts Script'];
+            
+            const safeProjects = Array.isArray(projects) ? projects : [];
+            const totalScenes = safeProjects.reduce((acc, p) => acc + (Array.isArray(p.scenes) ? p.scenes.length : 0), 0);
+            const totalTasks = safeProjects.reduce((acc, p) => acc + (Array.isArray(p.tasks) ? p.tasks.length : 0), 0);
+            const completedTasks = safeProjects.reduce((acc, p) => acc + (Array.isArray(p.tasks) ? p.tasks.filter(t => t.completed).length : 0), 0);
+            const completionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+            const handleCreate = (e) => {
+                e.preventDefault();
+                const project = {
+                    id: Date.now().toString(),
+                    ...newProj,
+                    createdAt: new Date().toISOString(),
+                    scenes: [{ id: Date.now().toString() + 's', title: 'Chapter 1', content: '' }],
+                    tasks: []
+                };
+                setProjects([...safeProjects, project]);
+                setIsCreating(false);
+                setNewProj({ title: '', type: 'Audiobook Script', status: 'Active', deadline: '' });
+            };
+
+            return (
+                <div className="p-6 max-w-5xl mx-auto min-h-screen pt-12">
+                    <div className="flex flex-col items-center mb-16">
+                        <div className="text-textDim text-[10px] tracking-[0.4em] uppercase mb-4 font-mono text-center leading-relaxed">
+                            <div className="mb-1">M a n u s c r i p t &nbsp; J o u r n a l</div>
+                            <div>• গ ল্প ব লি য়ে &nbsp; অ ভি যা ত্রি ক</div>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl text-gold font-serif mb-4 glow-text text-center leading-tight">
+                            গল্পবলিয়ের খেরোর খাতা
+                        </h1>
+                        <div className="text-textFaint text-[10px] tracking-[0.2em] uppercase font-mono mb-10 text-center">
+                            W r i t e r &apos; s &nbsp; C o r e &nbsp; S y s t e m
+                        </div>
+
+                        <div className="flex flex-wrap justify-center gap-8 md:gap-16 text-center border-b border-borderFaint pb-10 w-full max-w-3xl">
+                             <div>
+                                <div className="text-3xl text-gold font-serif mb-1">{safeProjects.length}</div>
+                                <div className="text-[9px] text-textDim tracking-widest uppercase font-mono">Active Projects</div>
+                             </div>
+                             <div>
+                                <div className="text-3xl text-gold font-serif mb-1">{totalScenes}</div>
+                                <div className="text-[9px] text-textDim tracking-widest uppercase font-mono">Total Scenes</div>
+                             </div>
+                             <div>
+                                <div className="text-3xl text-gold font-serif mb-1">{completionRate}%</div>
+                                <div className="text-[9px] text-textDim tracking-widest uppercase font-mono">Task Completion</div>
+                             </div>
+                        </div>
+
+                        <div className="flex gap-4 mt-10">
+                             <button onClick={() => setIsCreating(true)} className="bg-gold text-bgDeep hover:bg-yellow-500 px-8 py-3 text-[11px] tracking-[0.15em] font-mono font-bold rounded-sm transition-colors shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                                 NEW MANUSCRIPT
+                             </button>
+                        </div>
+                    </div>
+
+                    {isCreating && (
+                        <div className="bg-bgCard border border-borderFaint p-8 rounded-xl mb-12 shadow-2xl max-w-2xl mx-auto relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-goldDim to-transparent opacity-50"></div>
+                            <h2 className="text-xl text-gold mb-6 font-serif text-center">Open New Entry</h2>
+                            <form onSubmit={handleCreate} className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] text-textDim mb-2 font-mono uppercase tracking-widest">Title</label>
+                                    <input required type="text" value={newProj.title} onChange={e => setNewProj({...newProj, title: e.target.value})} className="w-full bg-bgDeep border border-borderFaint p-3 text-gold rounded font-serif text-lg focus:border-goldDim transition-colors" placeholder="Enter title..." />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] text-textDim mb-2 font-mono uppercase tracking-widest">Format</label>
+                                        <select value={newProj.type} onChange={e => setNewProj({...newProj, type: e.target.value})} className="w-full bg-bgDeep border border-borderFaint p-3 text-gold rounded font-mono text-xs focus:border-goldDim">
+                                            {shelves.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] text-textDim mb-2 font-mono uppercase tracking-widest">Target Deadline</label>
+                                        <input type="date" value={newProj.deadline} onChange={e => setNewProj({...newProj, deadline: e.target.value})} className="w-full bg-bgDeep border border-borderFaint p-3 text-gold rounded font-mono text-xs focus:border-goldDim" style={{colorScheme: 'dark'}} />
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 justify-center pt-4">
+                                    <button type="submit" className="border border-gold text-gold hover:bg-gold hover:text-bgDeep px-6 py-2 text-[10px] tracking-widest font-mono rounded transition-colors">INITIATE</button>
+                                    <button type="button" onClick={() => setIsCreating(false)} className="text-textDim hover:text-gold px-6 py-2 text-[10px] tracking-widest font-mono transition-colors">CANCEL</button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    <div className="space-y-16">
+                        {shelves.map(shelf => {
+                            const shelfProjects = safeProjects.filter(p => p.type === shelf);
+                            if (shelfProjects.length === 0) return null;
+                            
+                            return (
+                                <section key={shelf}>
+                                    <h3 className="text-textDim text-[11px] tracking-[0.3em] uppercase font-mono mb-6 flex items-center gap-4">
+                                        {shelf} <span className="flex-1 h-px bg-borderFaint"></span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        {shelfProjects.map(proj => (
+                                            <div key={proj.id} onClick={() => openProject(proj.id)} className="bg-bgCard border border-borderFaint hover:border-goldDim p-6 rounded-2xl cursor-pointer group transition-all relative">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <h3 className="text-lg text-gold font-serif leading-snug group-hover:glow-text transition-all">{proj.title}</h3>
+                                                </div>
+                                                <div className="mt-8 flex items-center justify-between border-t border-borderFaint pt-4">
+                                                    <span className="text-[10px] font-mono text-textDim flex items-center gap-2">
+                                                        <i className="ph ph-calendar-blank text-goldDim"></i> {proj.deadline ? new Date(proj.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'No date'}
+                                                    </span>
+                                                    <span className="text-[10px] bg-bgDeep px-2 py-1 rounded text-textDim font-mono border border-borderFaint">
+                                                        {Array.isArray(proj.scenes) ? proj.scenes.length : 0} SCENES
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const Editor = ({ project, updateProject, closeEditor }) => {
+            const safeScenes = Array.isArray(project.scenes) ? project.scenes : [];
+            const safeTasks = Array.isArray(project.tasks) ? project.tasks : [];
+
+            const [activeSceneId, setActiveSceneId] = useState(safeScenes[0]?.id || null);
+            const [isDistractionFree, setIsDistractionFree] = useState(false);
+            const [rightTab, setRightTab] = useState('todo'); 
+
+            const activeScene = safeScenes.find(s => s.id === activeSceneId);
+
+            const addScene = () => {
+                const newScene = { id: Date.now().toString(), title: 'Untitled Scene', content: '' };
+                updateProject({ ...project, scenes: [...safeScenes, newScene] });
+                setActiveSceneId(newScene.id);
+            };
+
+            const updateScene = (content) => {
+                const newScenes = safeScenes.map(s => s.id === activeSceneId ? { ...s, content } : s);
+                updateProject({ ...project, scenes: newScenes });
+            };
+
+            const updateSceneTitle = (title) => {
+                const newScenes = safeScenes.map(s => s.id === activeSceneId ? { ...s, title } : s);
+                updateProject({ ...project, scenes: newScenes });
+            };
+
+            const wordCount = activeScene && activeScene.content ? activeScene.content.trim().split(/\s+/).filter(w => w.length > 0).length : 0;
+
+            const addTask = (e) => {
+                if(e.key === 'Enter' && e.target.value.trim()) {
+                    const newTask = { id: Date.now().toString(), text: e.target.value, completed: false };
+                    updateProject({ ...project, tasks: [...safeTasks, newTask] });
+                    e.target.value = '';
+                }
+            };
+            const toggleTask = (taskId) => {
+                const newTasks = safeTasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
+                updateProject({ ...project, tasks: newTasks });
+            };
+
+            return (
+                <div className={`flex flex-col md:flex-row h-screen w-full bg-bgDeep ${isDistractionFree ? 'distraction-free' : ''}`}>
+                    
+                    {!isDistractionFree && (
+                        <div className="w-full md:w-64 bg-bgCard border-b md:border-r md:border-b-0 border-borderFaint flex flex-col md:h-full shrink-0 max-h-48 md:max-h-none overflow-hidden">
+                            <div className="p-3 md:p-5 border-b border-borderFaint flex items-center justify-between bg-bgDeep md:bg-transparent">
+                                <button onClick={closeEditor} className="text-textDim hover:text-gold transition-colors"><i className="ph ph-arrow-left text-xl"></i></button>
+                                <span className="text-[10px] font-mono tracking-widest text-goldDim uppercase">Binder</span>
+                                <button onClick={addScene} className="text-textDim hover:text-gold transition-colors"><i className="ph ph-plus text-xl"></i></button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-3 flex md:flex-col gap-2 md:space-y-2">
+                                {safeScenes.map((scene, idx) => (
+                                    <div 
+                                        key={scene.id} 
+                                        onClick={() => setActiveSceneId(scene.id)}
+                                        className={`p-3 rounded-lg min-w-[120px] md:min-w-0 cursor-pointer text-sm transition-all border ${activeSceneId === scene.id ? 'bg-bgDeep border-goldDim text-gold' : 'border-transparent text-textDim hover:border-borderFaint hover:text-goldDim'}`}
+                                    >
+                                        <div className="text-[9px] font-mono tracking-widest uppercase mb-1 opacity-60">Scene {idx + 1}</div>
+                                        <div className="font-serif truncate">{scene.title}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex-1 flex flex-col h-full relative border-b md:border-b-0 border-borderFaint">
+                        {!isDistractionFree && activeScene && (
+                            <div className="h-14 md:h-16 border-b border-borderFaint flex items-center justify-between px-4 md:px-8 shrink-0 bg-bgDeep">
+                                <input 
+                                    type="text" 
+                                    value={activeScene.title} 
+                                    onChange={(e) => updateSceneTitle(e.target.value)}
+                                    className="bg-transparent text-lg md:text-2xl font-serif text-gold focus:outline-none w-2/3"
+                                />
+                                <div className="flex items-center gap-4 md:gap-6 text-textDim font-mono text-xs">
+                                    <span className="hidden md:inline">{wordCount} W</span>
+                                    <button onClick={() => setIsDistractionFree(true)} title="Focus Mode" className="hover:text-gold transition-colors">
+                                        <i className="ph ph-corners-out text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {isDistractionFree && (
+                            <button onClick={() => setIsDistractionFree(false)} className="fixed top-6 right-6 text-textDim hover:text-gold opacity-30 hover:opacity-100 transition-opacity z-50">
+                                <i className="ph ph-corners-in text-2xl"></i>
+                            </button>
+                        )}
+
+                        <div className="flex-1 overflow-hidden p-4 md:p-8 max-w-3xl mx-auto w-full">
+                            {activeScene ? (
+                                <textarea
+                                    className="w-full h-full bg-transparent text-[#e0e0e0] text-base md:text-lg leading-loose resize-none font-body custom-scrollbar placeholder-textFaint"
+                                    value={activeScene.content}
+                                    onChange={(e) => updateScene(e.target.value)}
+                                    placeholder="The ink awaits..."
+                                />
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-textFaint font-mono text-sm tracking-widest uppercase text-center p-4">Select or create a scene to begin writing.</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {!isDistractionFree && (
+                        <div className="w-full md:w-80 bg-bgCard border-l-0 md:border-l border-borderFaint flex flex-col md:h-full shrink-0 min-h-[250px]">
+                            <div className="flex border-b border-borderFaint shrink-0">
+                                <button onClick={() => setRightTab('todo')} className={`flex-1 py-4 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors ${rightTab === 'todo' ? 'text-gold border-b border-gold bg-bgDeep' : 'text-textDim hover:text-goldDim'}`}>Tasks</button>
+                                <button onClick={() => setRightTab('ai')} className={`flex-1 py-4 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors ${rightTab === 'ai' ? 'text-gold border-b border-gold bg-bgDeep' : 'text-textDim hover:text-goldDim'}`}>Assistant</button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-5">
+                                {rightTab === 'todo' && (
+                                    <div>
+                                        <input 
+                                            type="text" 
+                                            placeholder="+ Add new task (Press Enter)" 
+                                            onKeyDown={addTask}
+                                            className="w-full bg-bgDeep border border-borderFaint rounded-md p-3 text-xs font-mono text-gold mb-6 focus:border-goldDim"
+                                        />
+                                        <div className="space-y-3">
+                                            {safeTasks.map(task => (
+                                                <div key={task.id} className="flex items-start gap-3 group">
+                                                    <button onClick={() => toggleTask(task.id)} className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-sm border transition-colors ${task.completed ? 'bg-goldDim border-goldDim text-bgDeep' : 'border-textDim hover:border-gold' } flex items-center justify-center`}>
+                                                        {task.completed && <i className="ph ph-check text-[10px] font-bold"></i>}
+                                                    </button>
+                                                    <span className={`text-sm font-serif leading-snug ${task.completed ? 'line-through text-textFaint' : 'text-gray-300'}`}>{task.text}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {rightTab === 'ai' && (
+                                    <div className="space-y-8">
+                                        <div>
+                                            <h4 className="text-[9px] text-textDim font-mono uppercase tracking-[0.2em] mb-3">Memory Mode</h4>
+                                            <select className="w-full bg-bgDeep text-xs font-mono text-gold p-3 rounded-md border border-borderFaint focus:border-goldDim">
+                                                <option value="project">Current Project Only</option>
+                                                <option value="shared">Shared Universe</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-[9px] text-textDim font-mono uppercase tracking-[0.2em] mb-3">Tools</h4>
+                                            <div className="space-y-2">
+                                                {['Write & Continue', 'Translate (BN ↔ EN)', 'Format Script', 'Brainstorm Ideas', 'Proofread'].map(tool => (
+                                                    <button key={tool} className="w-full text-left bg-bgDeep hover:bg-[#151515] border border-borderFaint hover:border-goldDim p-3 rounded-md text-xs font-mono text-[#a0a0a0] transition-colors flex items-center justify-between group">
+                                                        {tool} <i className="ph ph-arrow-right opacity-0 group-hover:opacity-100 text-gold transition-opacity"></i>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [projects, setProjects] = useLocalStorage('gkk-projects', []);
+            const [activeProjectId, setActiveProjectId] = useState(null);
+
+            const safeProjects = Array.isArray(projects) ? projects : [];
+            const activeProject = safeProjects.find(p => p.id === activeProjectId);
+
+            const updateActiveProject = (updatedProject) => {
+                setProjects(safeProjects.map(p => p.id === updatedProject.id ? updatedProject : p));
+            };
+
+            return (
+                <div className="min-h-screen selection:bg-goldDim selection:text-white">
+                    {activeProject ? (
+                        <Editor 
+                            project={activeProject} 
+                            updateProject={updateActiveProject} 
+                            closeEditor={() => setActiveProjectId(null)} 
+                        />
+                    ) : (
+                        <Dashboard 
+                            projects={safeProjects} 
+                            setProjects={setProjects} 
+                            openProject={setActiveProjectId} 
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>
+        );
+    </script>
+</body>
+</html>
